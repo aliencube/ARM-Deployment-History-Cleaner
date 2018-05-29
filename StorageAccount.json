@@ -1,0 +1,87 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The region where resources are deployed"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage Account"
+      }
+    },
+    "storageAccountSkuName": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU Name for the Storage Account"
+      },
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Standard_RGRS"
+      ],
+      "defaultValue": "Standard_LRS"
+    },
+    "storageAccountSkuTier": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU Tier for the Storage Account"
+      },
+      "defaultValue": "Standard"
+    }
+  },
+  "variables": {
+    "storageAccount": {
+      "name": "[parameters('storageAccountName')]",
+      "apiVersion": "[providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]",
+        "tier": "[parameters('storageAccountSkuTier')]"
+      }
+    },
+    "tags": {
+      "author": "Justin Yoo",
+      "profile": "https://twitter.com/justinchronicle",
+      "projectUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "repositoryUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "license": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/LICENSE"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### RESOURCE - STORAGE ACCOUNT ###",
+      "apiVersion": "[variables('storageAccount').apiVersion]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccount').name]",
+      "location": "[variables('storageAccount').location]",
+      "kind": "Storage",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "name": "[variables('storageAccount').sku.name]",
+        "tier": "[variables('storageAccount').sku.tier]"
+      },
+      "properties": {
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
