@@ -310,7 +310,7 @@
                           "type": "Compose",
                           "runAfter": {},
                           "inputs": {
-                            "partitionKey": "@items('LoopDeploymentHistories')?['properties']?['provisioningState']",
+                            "partitionKey": "@variables('ResourceGroup')",
                             "rowKey": "@items('LoopDeploymentHistories')?['name']",
                             "entity": {
                               "dateRun": "@items('LoopDeploymentHistories')?['properties']?['timestamp']",
@@ -352,7 +352,7 @@
                               }
                             },
                             "method": "delete",
-                            "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(parameters('arm')['resourceGroup'])}/providers/Microsoft.Resources/deployments/@{encodeURIComponent(items('LoopDeploymentHistories')?['name'])}",
+                            "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(variables('ResourceGroup'))}/providers/Microsoft.Resources/deployments/@{encodeURIComponent(items('LoopDeploymentHistories')?['name'])}",
                             "queries": {
                               "x-ms-api-version": "@{parameters('arm')['apiVersion']}"
                             }
@@ -392,7 +392,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(parameters('arm')['resourceGroup'])}/providers/Microsoft.Resources/deployments",
+                "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(variables('ResourceGroup'))}/providers/Microsoft.Resources/deployments",
                 "queries": {
                   "x-ms-api-version": "@{parameters('arm')['apiVersion']}"
                 }
