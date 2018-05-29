@@ -14,8 +14,8 @@ This ARM template deploys the following Azure resources:
 
 * Azure Storage Account
 * Azure Logic Apps
-* Connectors - ARM
-* Connectors - Table Storage
+* Connector - ARM
+* Connector - Table Storage
 
 
 ### Deployment through Azure Portal ###
