@@ -66,6 +66,13 @@ Alternatively, deploy it through Azure PowerShell.
 
    If the payload is omitted, the resource group that this Logic App is located is automatically chosen by default.
 
+> **NOTE**: This is using nested ARM template deployment. If you are not sure how it works, deploy each ARM template individually in the following order:
+>
+> 1. `StorageAccount.json`
+> 1. `Connector.Arm.json`
+> 1. `Connector.TableStorage.json`
+> 1. `LogicApp.json`
+
 
 ## Contribution ##
 
