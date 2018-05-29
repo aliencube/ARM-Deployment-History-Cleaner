@@ -5,7 +5,7 @@ This provides Azure Logic Apps to clean up ARM deployment history.
 
 ## Background ##
 
-One Azure Resource Group can only have up to 800 deployment history. If the number of deployment histories exceeds 800, deployment cannot be happending but throwing an error. Therefore, the history needs to be regularly purged. With this Azure Logic App, it can be easily removed.
+One Azure Resource Group can only have up to 800 deployment history. If the number of deployment histories exceeds 800, deployment cannot be happending but throwing an error. Therefore, the history needs to be regularly purged. With this Azure Logic App, they can be easily removed within 15 minutes, while using PowerShell takes more than 6 hours.
 
 
 ## Getting Started ##
