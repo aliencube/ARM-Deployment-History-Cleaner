@@ -107,7 +107,7 @@
   },
   "variables": {
     "nested": {
-      "apiVersion": "[providers('Microsoft.Resources', 'deployments').apiVersions[0]]",
+      "apiVersion": "[providers('Microsoft.Resources', 'deployments').apiVersions[0]]"
     },
     "storageAccount": {
       "name": "[parameters('storageAccountName')]",
