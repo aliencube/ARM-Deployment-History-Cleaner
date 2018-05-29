@@ -153,7 +153,7 @@
       "comments": "### RESOURCE - STORAGE ACCOUNT ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('storageaccount-', guid(resourceGroup().id))]",
+      "name": "[concat('storageaccount-', guid(resourceGroup().id, deployment().name))]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -179,7 +179,7 @@
       "comments": "### CONNECTOR - ARM ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('connector-arm-', guid(resourceGroup().id))]",
+      "name": "[concat('connector-arm-', guid(resourceGroup().id, deployment().name))]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -214,7 +214,7 @@
       "comments": "### CONNECTOR - TABLE STORAGE ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('connector-azuretables-', guid(resourceGroup().id))]",
+      "name": "[concat('connector-azuretables-', guid(resourceGroup().id, deployment().name))]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -237,7 +237,7 @@
       "comments": "### RESOURCE - LOGIC APP ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('logicapp-', guid(resourceGroup().id))]",
+      "name": "[concat('logicapp-', guid(subscription().subscriptionId, deployment().name))]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
