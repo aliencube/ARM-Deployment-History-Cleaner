@@ -397,19 +397,6 @@
                   "x-ms-api-version": "@{parameters('arm')['apiVersion']}"
                 }
               }
-            },
-            "ResponseRemainingDeploymentHistories": {
-              "type": "Response",
-              "runAfter": {
-                "ChecksDeployments": [
-                  "Succeeded"
-                ]
-              },
-              "description": "Returns the remaining deployment histories. This should be empty array.",
-              "inputs": {
-                "statusCode": 200,
-                "body": "@body('ChecksDeployments')?['value']"
-              }
             }
           },
           "outputs": {}
