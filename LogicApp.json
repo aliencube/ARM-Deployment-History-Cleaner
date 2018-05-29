@@ -300,6 +300,11 @@
                       "runAfter": {},
                       "description": "Loop deployment histories.",
                       "foreach": "@body('FetchDeploymentHistories')?['value']",
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 50
+                        }
+                      },
                       "actions": {
                         "ComposeDataSet": {
                           "type": "Compose",
