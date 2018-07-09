@@ -140,6 +140,12 @@
         "accountName": "[variables('storageAccount').name]"
       }
     },
+    "deployments": {
+      "storageAccount": "[concat('storageaccount-', guid(resourceGroup().id, deployment().name))]",
+      "connectorArm": "[concat('connector-arm-', guid(resourceGroup().id, deployment().name))]",
+      "connectorAzureTables": "[concat('connector-azuretables-', guid(resourceGroup().id, deployment().name))]",
+      "logicApp": "[concat('logicapp-', guid(resourceGroup().id, deployment().name))]"
+    },
     "tags": {
       "author": "Justin Yoo",
       "profile": "https://twitter.com/justinchronicle",
@@ -153,7 +159,7 @@
       "comments": "### RESOURCE - STORAGE ACCOUNT ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('storageaccount-', guid(resourceGroup().id, deployment().name))]",
+      "name": "[variables('deployments').storageAccount]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -179,7 +185,7 @@
       "comments": "### CONNECTOR - ARM ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('connector-arm-', guid(resourceGroup().id, deployment().name))]",
+      "name": "[variables('deployments').connectorArm]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -214,7 +220,10 @@
       "comments": "### CONNECTOR - TABLE STORAGE ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('connector-azuretables-', guid(resourceGroup().id, deployment().name))]",
+      "name": "[variables('deployments').connectorAzureTables]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').storageAccount)]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -237,7 +246,12 @@
       "comments": "### RESOURCE - LOGIC APP ###",
       "apiVersion": "[variables('nested').apiVersion]",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('logicapp-', guid(subscription().subscriptionId, deployment().name))]",
+      "name": "[variables('deployments').logicApp]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').storageAccount)]",
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').connectorArm)]",
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').connectorAzureTables)]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
