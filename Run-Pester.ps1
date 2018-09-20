@@ -16,12 +16,7 @@ Param(
 
 $parameters = @{ ResourceGroupName = $ResourceGroupName; SrcDirectory = $SrcDirectory; Username = $Username; Password = $Password; TenantId = $TenantId; IsLocal = $IsLocal }
 
-Get-Item $TestDirectory\*.Tests.ps1 | ForEach {
-    $segment = $_.FullName.Split("\")
-    $testFile = $segment[$segment.Length - 1].Replace(".ps1", "");
-    $outputFile = "$OutputDirectory\TEST-$testFile-$BuildNumber.xml"
+$outputFile = "$OutputDirectory\TEST-$TestDirectory-$BuildNumber.xml"
+$script = @{ Path = $TestDirectory; Parameters = $parameters }
 
-    $script = @{ Path = $_.FullName; Parameters = $parameters }
-    
-    Invoke-Pester -Script $script -OutputFile $outputFile -OutputFormat NUnitXml
-}
+Invoke-Pester -Script $script -OutputFile $outputFile -OutputFormat NUnitXml -EnableExit
