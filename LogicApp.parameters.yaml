@@ -7,5 +7,5 @@ parameters:
     value: '[STORAGE_ACCOUNT_NAME]'
   armConnectorName:
     value: '[ARM_CONNECTOR_NAME]'
-  storageConnectorName:
-    value: '[STORAGE_CONNECTOR_NAME]'
+  tableStorageConnectorName:
+    value: '[TABLE_STORAGE_CONNECTOR_NAME]'

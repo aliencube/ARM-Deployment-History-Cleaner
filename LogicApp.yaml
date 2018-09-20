@@ -23,7 +23,7 @@ parameters:
     type: string
     metadata:
       description: Name of ARM connector
-  storageConnectorName:
+  tableStorageConnectorName:
     type: string
     metadata:
       description: Name of Storage connector
