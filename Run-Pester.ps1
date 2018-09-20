@@ -16,7 +16,7 @@ Param(
 
 $parameters = @{ ResourceGroupName = $ResourceGroupName; SrcDirectory = $SrcDirectory; Username = $Username; Password = $Password; TenantId = $TenantId; IsLocal = $IsLocal }
 
-$outputFile = "$OutputDirectory\TEST-$TestDirectory-$BuildNumber.xml"
+$outputFile = "$OutputDirectory\TEST-$BuildNumber.xml"
 $script = @{ Path = $TestDirectory; Parameters = $parameters }
 
 Invoke-Pester -Script $script -OutputFile $outputFile -OutputFormat NUnitXml -EnableExit
