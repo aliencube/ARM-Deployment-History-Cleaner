@@ -3,5 +3,5 @@ contentVersion: 1.0.0.0
 parameters:
   storageAccountName:
     value: '[STORAGE_ACCOUNT_NAME]'
-  storageConnectorName:
+  connectorName:
     value: '[STORAGE_CONNECTOR_NAME]'
