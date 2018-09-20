@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The region where resources are deployed"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage Account"
+      }
+    },
+    "connectorName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage connector"
+      }
+    }
+  },
+  "variables": {
+    "storageAccount": {
+      "name": "[parameters('storageAccountName')]",
+      "apiVersion": "[providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]]"
+    },
+    "connectors": {
+      "apiVersion": "[providers('Microsoft.Web', 'connections').apiVersions[0]]",
+      "location": "[parameters('location')]",
+      "azuretables": {
+        "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuretables')]",
+        "name": "[parameters('connectorName')]",
+        "displayName": "[parameters('connectorName')]",
+        "accountName": "[variables('storageAccount').name]"
+      }
+    },
+    "tags": {
+      "author": "Justin Yoo",
+      "profile": "https://twitter.com/justinchronicle",
+      "projectUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "repositoryUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "license": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/LICENSE"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### CONNECTOR - TABLE STORAGE ###",
+      "apiVersion": "[variables('connectors').apiVersion]",
+      "type": "Microsoft.Web/connections",
+      "name": "[variables('connectors').azuretables.name]",
+      "location": "[variables('connectors').location]",
+      "properties": {
+        "api": {
+          "id": "[variables('connectors').azuretables.id]"
+        },
+        "displayName": "[variables('connectors').azuretables.displayName]",
+        "parameterValues": {
+          "storageaccount": "[variables('connectors').azuretables.accountName]",
+          "sharedkey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount').name), variables('storageAccount').apiVersion).keys[0].value]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

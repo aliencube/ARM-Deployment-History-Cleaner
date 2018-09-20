@@ -1,0 +1,409 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The region where resources are deployed"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Logic App"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage Account"
+      }
+    },
+    "tableStorageTableName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of table in Table Storage"
+      },
+      "defaultValue": "DeploymentHistory"
+    },
+    "armConnectorName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of ARM connector"
+      }
+    },
+    "tableStorageConnectorName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage connector"
+      }
+    }
+  },
+  "variables": {
+    "logicApp": {
+      "name": "[parameters('logicAppName')]",
+      "apiVersion": "[providers('Microsoft.Logic', 'workflows').apiVersions[0]]",
+      "location": "[parameters('location')]"
+    },
+    "storageAccount": {
+      "name": "[parameters('storageAccountName')]",
+      "tableStorageTableName": "[parameters('tableStorageTableName')]"
+    },
+    "connectors": {
+      "apiVersion": "[providers('Microsoft.Web', 'connections').apiVersions[0]]",
+      "location": "[parameters('location')]",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "arm": {
+        "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/arm')]",
+        "name": "[parameters('armConnectorName')]",
+        "connectionId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/', parameters('armConnectorName'))]",
+        "resourceGroup": "[resourceGroup().name]",
+        "apiVersion": "2016-06-01"
+      },
+      "azuretables": {
+        "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuretables')]",
+        "name": "[parameters('tableStorageConnectorName')]",
+        "connectionId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/', parameters('tableStorageConnectorName'))]",
+        "tableName": "[variables('storageAccount').tableStorageTableName]"
+      }
+    },
+    "tags": {
+      "author": "Justin Yoo",
+      "profile": "https://twitter.com/justinchronicle",
+      "projectUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "repositoryUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "license": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/LICENSE"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### RESOURCE - LOGIC APP ###",
+      "apiVersion": "[variables('logicApp').apiVersion]",
+      "type": "Microsoft.Logic/workflows",
+      "name": "[variables('logicApp').name]",
+      "location": "[variables('logicApp').location]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "state": "Enabled",
+        "parameters": {
+          "$connections": {
+            "value": {
+              "arm": {
+                "connectionId": "[variables('connectors').arm.connectionId]",
+                "connectionName": "[variables('connectors').arm.name]",
+                "id": "[variables('connectors').arm.id]"
+              },
+              "azuretables": {
+                "connectionId": "[variables('connectors').azuretables.connectionId]",
+                "connectionName": "[variables('connectors').azuretables.name]",
+                "id": "[variables('connectors').azuretables.id]"
+              }
+            }
+          },
+          "arm": {
+            "value": {
+              "subscriptionId": "[variables('connectors').subscriptionId]",
+              "resourceGroup": "[variables('connectors').arm.resourceGroup]",
+              "apiVersion": "[variables('connectors').arm.apiVersion]"
+            }
+          },
+          "azuretables": {
+            "value": {
+              "tableName": "[variables('connectors').azuretables.tableName]"
+            }
+          }
+        },
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "type": "object",
+              "defaultValue": {}
+            },
+            "arm": {
+              "type": "object",
+              "defaultValue": {}
+            },
+            "azuretables": {
+              "type": "object",
+              "defaultValue": {}
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "resourceGroup": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "actions": {
+            "InitialiseUntilLoopIndicator": {
+              "type": "InitializeVariable",
+              "runAfter": {},
+              "description": "Initialises indicator for the until-loop.",
+              "inputs": {
+                "variables": [
+                  {
+                    "type": "Boolean",
+                    "name": "HasMoreDeploymentHistories",
+                    "value": true
+                  }
+                ]
+              }
+            },
+            "InitialiseResourceGroup": {
+              "type": "InitializeVariable",
+              "runAfter": {},
+              "description": "Initialises resource group.",
+              "inputs": {
+                "variables": [
+                  {
+                    "type": "String",
+                    "name": "ResourceGroup",
+                    "value": "@{if(empty(coalesce(triggerBody()?['resourceGroup'], '')), parameters('arm')['resourceGroup'], triggerBody()?['resourceGroup'])}"
+                  }
+                ]
+              }
+            },
+            "GetTables": {
+              "type": "ApiConnection",
+              "runAfter": {},
+              "description": "Gets the list of tables from the table storage.",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/Tables"
+              }
+            },
+            "GetTable": {
+              "type": "Query",
+              "runAfter": {
+                "GetTables": [
+                  "Succeeded"
+                ]
+              },
+              "description": "Filters the list of tables.",
+              "inputs": {
+                "from": "@body('GetTables')?['value']",
+                "where": "@equals(item()?['TableName'], parameters('azuretables')['tableName'])"
+              }
+            },
+            "IfTableNotExist": {
+              "type": "If",
+              "runAfter": {
+                "GetTable": [
+                  "Succeeded"
+                ]
+              },
+              "description": "Checks whether the table exists or not.",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@length(body('GetTable'))",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "CreateTable": {
+                  "type": "ApiConnection",
+                  "runAfter": {},
+                  "description": "Creates a new table.",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['azuretables']['connectionId']"
+                      }
+                    },
+                    "method": "post",
+                    "path": "/Tables",
+                    "body": "@{parameters('azuretables')['tableName']}"
+                  }
+                }
+              }
+            },
+            "LoopWhileDeploymentHistoriesExist": {
+              "type": "Until",
+              "runAfter": {
+                "InitialiseUntilLoopIndicator": [
+                  "Succeeded"
+                ],
+                "InitialiseResourceGroup": [
+                  "Succeeded"
+                ],
+                "IfTableNotExist": [
+                  "Succeeded"
+                ]
+              },
+              "description": "Loops until no deployment histories exist.",
+              "expression": "@equals(variables('HasMoreDeploymentHistories'), false)",
+              "limit": {
+                "count": 20,
+                "timeout": "PT1H"
+              },
+              "actions": {
+                "FetchDeploymentHistories": {
+                  "type": "ApiConnection",
+                  "runAfter": {},
+                  "description": "Fetches the list of deployment histories.",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['arm']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(variables('ResourceGroup'))}/providers/Microsoft.Resources/deployments",
+                    "queries": {
+                      "x-ms-api-version": "@{parameters('arm')['apiVersion']}"
+                    }
+                  }
+                },
+                "CheckWhetherMoreDeploymentHistoriesExist": {
+                  "type": "If",
+                  "runAfter": {
+                    "FetchDeploymentHistories": [
+                      "Succeeded"
+                    ]
+                  },
+                  "description": "Checks whether more deployment histories exist or not.",
+                  "expression": {
+                    "and": [
+                      {
+                        "greater": [
+                          "@length(body('FetchDeploymentHistories')?['value'])",
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "LoopDeploymentHistories": {
+                      "type": "Foreach",
+                      "runAfter": {},
+                      "description": "Loop deployment histories.",
+                      "foreach": "@body('FetchDeploymentHistories')?['value']",
+                      "runtimeConfiguration": {
+                        "concurrency": {
+                          "repetitions": 50
+                        }
+                      },
+                      "actions": {
+                        "ComposeDataSet": {
+                          "type": "Compose",
+                          "runAfter": {},
+                          "inputs": {
+                            "partitionKey": "@variables('ResourceGroup')",
+                            "rowKey": "@items('LoopDeploymentHistories')?['name']",
+                            "entity": {
+                              "dateRun": "@items('LoopDeploymentHistories')?['properties']?['timestamp']",
+                              "details": "@{string(items('LoopDeploymentHistories'))}"
+                            }
+                          }
+                        },
+                        "StoreDeploymentHistory": {
+                          "type": "ApiConnection",
+                          "runAfter": {
+                            "ComposeDataSet": [
+                              "Succeeded"
+                            ]
+                          },
+                          "description": "Stores the deployment history to table storage.",
+                          "inputs": {
+                            "host": {
+                              "connection": {
+                                "name": "@parameters('$connections')['azuretables']['connectionId']"
+                              }
+                            },
+                            "method": "put",
+                            "path": "/Tables/@{encodeURIComponent(parameters('azuretables')['tableName'])}/entities(PartitionKey='@{encodeURIComponent(outputs('ComposeDataSet')?['partitionKey'])}',RowKey='@{encodeURIComponent(outputs('ComposeDataSet')?['rowKey'])}')",
+                            "body": "@outputs('ComposeDataSet')?['entity']"
+                          }
+                        },
+                        "DeleteDeploymentHistory": {
+                          "type": "ApiConnection",
+                          "runAfter": {
+                            "StoreDeploymentHistory": [
+                              "Succeeded"
+                            ]
+                          },
+                          "description": "Delete deployment history.",
+                          "inputs": {
+                            "host": {
+                              "connection": {
+                                "name": "@parameters('$connections')['arm']['connectionId']"
+                              }
+                            },
+                            "method": "delete",
+                            "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(variables('ResourceGroup'))}/providers/Microsoft.Resources/deployments/@{encodeURIComponent(items('LoopDeploymentHistories')?['name'])}",
+                            "queries": {
+                              "x-ms-api-version": "@{parameters('arm')['apiVersion']}"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "SetVariableForDeploymentHistories": {
+                        "type": "SetVariable",
+                        "runAfter": {},
+                        "description": "Sets the variable value to 'false' to exit the loop.",
+                        "inputs": {
+                          "name": "HasMoreDeploymentHistories",
+                          "value": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ChecksDeployments": {
+              "type": "ApiConnection",
+              "runAfter": {
+                "LoopWhileDeploymentHistoriesExist": [
+                  "Succeeded"
+                ]
+              },
+              "description": "Checks whether more deployment histories exist or not. This should return an empty array.",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['arm']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/subscriptions/@{encodeURIComponent(parameters('arm')['subscriptionId'])}/resourcegroups/@{encodeURIComponent(variables('ResourceGroup'))}/providers/Microsoft.Resources/deployments",
+                "queries": {
+                  "x-ms-api-version": "@{parameters('arm')['apiVersion']}"
+                }
+              }
+            }
+          },
+          "outputs": {}
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

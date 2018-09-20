@@ -1,0 +1,278 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The region where resources are deployed"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage Account"
+      }
+    },
+    "storageAccountSkuName": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU Name for the Storage Account"
+      },
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Standard_RGRS"
+      ],
+      "defaultValue": "Standard_LRS"
+    },
+    "storageAccountSkuTier": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU Tier for the Storage Account"
+      },
+      "defaultValue": "Standard"
+    },
+    "tableStorageTableName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of table in Table Storage"
+      },
+      "defaultValue": "DeploymentHistory"
+    },
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Logic App"
+      }
+    },
+    "armConnectorName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of ARM connector"
+      }
+    },
+    "servicePrincipalClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Client Id of Service principal to access to subscription"
+      },
+      "defaultValue": ""
+    },
+    "servicePrincipalClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client secret of Service principal to access to subscription"
+      }
+    },
+    "servicePrincipalTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "Tenant Id"
+      },
+      "defaultValue": ""
+    },
+    "servicePrincipalResourceUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource URI to request authorisation"
+      },
+      "defaultValue": "https://management.core.windows.net/"
+    },
+    "servicePrincipalGrantType": {
+      "type": "string",
+      "metadata": {
+        "description": "Grant type of Service Principal to access to subscription"
+      },
+      "allowedValues": [
+        "code",
+        "client_credentials"
+      ],
+      "defaultValue": "client_credentials"
+    },
+    "storageConnectorName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Storage connector"
+      }
+    }
+  },
+  "variables": {
+    "nested": {
+      "apiVersion": "[providers('Microsoft.Resources', 'deployments').apiVersions[0]]"
+    },
+    "storageAccount": {
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]",
+        "tier": "[parameters('storageAccountSkuTier')]"
+      }
+    },
+    "logicApp": {
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('location')]",
+      "storageAccountName": "[variables('storageAccount').name]",
+      "tableStorageTableName": "[parameters('tableStorageTableName')]",
+      "armConnectorName": "[parameters('armConnectorName')]",
+      "storageConnectorName": "[parameters('storageConnectorName')]"
+    },
+    "connectors": {
+      "location": "[parameters('location')]",
+      "arm": {
+        "name": "[parameters('armConnectorName')]",
+        "clientId": "[parameters('servicePrincipalClientId')]",
+        "clientSecret": "[parameters('servicePrincipalClientSecret')]",
+        "tenantId": "[parameters('servicePrincipalTenantId')]",
+        "resourceUri": "[parameters('servicePrincipalResourceUri')]",
+        "grantType": "[parameters('servicePrincipalGrantType')]"
+      },
+      "azuretables": {
+        "name": "[parameters('storageConnectorName')]",
+        "accountName": "[variables('storageAccount').name]"
+      }
+    },
+    "deployments": {
+      "storageAccount": "[concat('storageaccount-', guid(resourceGroup().id, deployment().name))]",
+      "connectorArm": "[concat('connector-arm-', guid(resourceGroup().id, deployment().name))]",
+      "connectorAzureTables": "[concat('connector-azuretables-', guid(resourceGroup().id, deployment().name))]",
+      "logicApp": "[concat('logicapp-', guid(resourceGroup().id, deployment().name))]"
+    },
+    "tags": {
+      "author": "Justin Yoo",
+      "profile": "https://twitter.com/justinchronicle",
+      "projectUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "repositoryUrl": "https://github.com/aliencube/ARM-Deployment-History-Cleaner",
+      "license": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/LICENSE"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### RESOURCE - STORAGE ACCOUNT ###",
+      "apiVersion": "[variables('nested').apiVersion]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('deployments').storageAccount]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/StorageAccount.json"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('storageAccount').location]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccount').name]"
+          },
+          "storageAccountSkuName": {
+            "value": "[variables('storageAccount').sku.name]"
+          },
+          "storageAccountSkuTier": {
+            "value": "[variables('storageAccount').sku.tier]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "### CONNECTOR - ARM ###",
+      "apiVersion": "[variables('nested').apiVersion]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('deployments').connectorArm]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/Connector.Arm.json"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('connectors').location]"
+          },
+          "connectorName": {
+            "value": "[variables('connectors').arm.name]"
+          },
+          "servicePrincipalClientId": {
+            "value": "[variables('connectors').arm.clientId]"
+          },
+          "servicePrincipalClientSecret": {
+            "value": "[variables('connectors').arm.clientSecret]"
+          },
+          "servicePrincipalTenantId": {
+            "value": "[variables('connectors').arm.tenantId]"
+          },
+          "servicePrincipalResourceUri": {
+            "value": "[variables('connectors').arm.resourceUri]"
+          },
+          "servicePrincipalGrantType": {
+            "value": "[variables('connectors').arm.grantType]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "### CONNECTOR - TABLE STORAGE ###",
+      "apiVersion": "[variables('nested').apiVersion]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('deployments').connectorAzureTables]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').storageAccount)]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/Connector.TableStorage.json"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('connectors').location]"
+          },
+          "storageAccountName": {
+            "value": "[variables('connectors').azuretables.accountName]"
+          },
+          "connectorName": {
+            "value": "[variables('connectors').azuretables.name]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "### RESOURCE - LOGIC APP ###",
+      "apiVersion": "[variables('nested').apiVersion]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('deployments').logicApp]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').storageAccount)]",
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').connectorArm)]",
+        "[resourceId('Microsoft.Resources/deployments', variables('deployments').connectorAzureTables)]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/aliencube/ARM-Deployment-History-Cleaner/master/LogicApp.json"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('logicApp').location]"
+          },
+          "logicAppName": {
+            "value": "[variables('logicApp').name]"
+          },
+          "storageAccountName": {
+            "value": "[variables('logicApp').storageAccountName]"
+          },
+          "tableStorageTableName": {
+            "value": "[variables('logicApp').tableStorageTableName]"
+          },
+          "armConnectorName": {
+            "value": "[variables('logicApp').armConnectorName]"
+          },
+          "storageConnectorName": {
+            "value": "[variables('logicApp').storageConnectorName]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
