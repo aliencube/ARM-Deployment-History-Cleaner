@@ -34,7 +34,7 @@ Describe "Logic App Deployment Tests" {
         $result = $output.properties
 
         It "Should be deployed successfully" {
-            $result.provisioningState | Should -Be $null
+            $result.provisioningState | Should -Be "Succeeded"
         }
 
         It "Should have state of" {
