@@ -47,8 +47,8 @@ variables:
       apiVersion: 2016-06-01
     azuretables:
       id: "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuretables')]"
-      name: "[parameters('storageConnectorName')]"
-      connectionId: "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/', parameters('storageConnectorName'))]"
+      name: "[parameters('tableStorageConnectorName')]"
+      connectionId: "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/', parameters('tableStorageConnectorName'))]"
       tableName: "[variables('storageAccount').tableStorageTableName]"
   tags:
     author: Justin Yoo
