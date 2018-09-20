@@ -329,6 +329,7 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 
+TEST-*.xml
 *.json
 *.parameters.*.yaml
 yarm-cli/
