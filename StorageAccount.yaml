@@ -45,7 +45,7 @@ resources:
   type: Microsoft.Storage/storageAccounts
   name: "[variables('storageAccount').name]"
   location: "[variables('storageAccount').location]"
-  kind: Storage
+  kind: StorageV2
   tags: "[variables('tags')]"
   sku:
     name: "[variables('storageAccount').sku.name]"

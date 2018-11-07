@@ -189,6 +189,6 @@ resources:
         value: "[variables('logicApp').tableStorageTableName]"
       armConnectorName:
         value: "[variables('logicApp').armConnectorName]"
-      storageConnectorName:
+      tableStorageConnectorName:
         value: "[variables('logicApp').storageConnectorName]"
 outputs: {}
